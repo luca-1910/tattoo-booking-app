@@ -2,6 +2,10 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import {
+  sendBookingConfirmationToClient,
+  sendBookingNotificationToArtist,
+} from "@/lib/email/index";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,7 +52,7 @@ export async function submitBooking(
       notes: data.notes ?? null,
       status: "pending",
     })
-    .select("status_token")
+    .select("*")
     .single();
 
   if (bookingError || !booking) {
@@ -62,6 +66,19 @@ export async function submitBooking(
 
   if (slotError) {
     return { success: false, error: "Failed to reserve slot. Please try again." };
+  }
+
+  // Fetch slot for emails — failure here must not block the response
+  const { data: slot } = await supabase
+    .from("available_slots")
+    .select("*")
+    .eq("id", data.slot_id)
+    .single();
+
+  if (slot) {
+    // Fire-and-forget — errors are caught inside each function
+    void sendBookingConfirmationToClient(booking, slot);
+    void sendBookingNotificationToArtist(booking, slot);
   }
 
   return { success: true, status_token: booking.status_token };
