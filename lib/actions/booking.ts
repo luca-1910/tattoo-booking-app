@@ -1,16 +1,23 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
   sendBookingConfirmationToClient,
   sendBookingNotificationToArtist,
+  sendApprovalEmail,
+  sendRejectionEmail,
+  sendCancellationEmail,
 } from "@/lib/email/index";
+import { createCalendarEvent, deleteCalendarEvent } from "@/lib/google/calendar";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// ── Submit booking (public) ───────────────────────────────────────────────────
 
 const submitSchema = z.object({
   slot_id: z.string().uuid(),
@@ -68,7 +75,6 @@ export async function submitBooking(
     return { success: false, error: "Failed to reserve slot. Please try again." };
   }
 
-  // Fetch slot for emails — failure here must not block the response
   const { data: slot } = await supabase
     .from("available_slots")
     .select("*")
@@ -76,7 +82,6 @@ export async function submitBooking(
     .single();
 
   if (slot) {
-    // Fire-and-forget — errors are caught inside each function
     void sendBookingConfirmationToClient(booking, slot);
     void sendBookingNotificationToArtist(booking, slot);
   }
@@ -84,14 +89,133 @@ export async function submitBooking(
   return { success: true, status_token: booking.status_token };
 }
 
-export async function approveBooking() {
-  // TODO: approve booking
+// ── Approve booking (admin) ───────────────────────────────────────────────────
+
+export async function approveBooking(
+  bookingId: string
+): Promise<{ success: boolean; error?: string }> {
+  const { data: booking, error: bookingFetchError } = await supabase
+    .from("bookings")
+    .select("*, available_slots(*)")
+    .eq("id", bookingId)
+    .single();
+
+  if (bookingFetchError || !booking) {
+    return { success: false, error: "Booking not found." };
+  }
+
+  const { error: updateError } = await supabase
+    .from("bookings")
+    .update({ status: "approved" })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { success: false, error: "Failed to approve booking." };
+  }
+
+  await supabase
+    .from("available_slots")
+    .update({ status: "booked" })
+    .eq("id", booking.slot_id);
+
+  // Create calendar event — store ID if returned
+  try {
+    const eventId = await createCalendarEvent(booking, booking.available_slots);
+    if (eventId) {
+      await supabase
+        .from("bookings")
+        .update({ google_event_id: eventId })
+        .eq("id", bookingId);
+    }
+  } catch (err) {
+    console.error("[calendar] createCalendarEvent failed:", err);
+  }
+
+  void sendApprovalEmail(booking, booking.available_slots);
+
+  revalidatePath(`/admin/bookings/${bookingId}`);
+  revalidatePath("/admin");
+  return { success: true };
 }
 
-export async function rejectBooking() {
-  // TODO: reject booking
+// ── Reject booking (admin) ────────────────────────────────────────────────────
+
+export async function rejectBooking(
+  bookingId: string,
+  reason?: string
+): Promise<{ success: boolean; error?: string }> {
+  const { data: booking, error: bookingFetchError } = await supabase
+    .from("bookings")
+    .select("*, available_slots(*)")
+    .eq("id", bookingId)
+    .single();
+
+  if (bookingFetchError || !booking) {
+    return { success: false, error: "Booking not found." };
+  }
+
+  const { error: updateError } = await supabase
+    .from("bookings")
+    .update({ status: "rejected", rejection_reason: reason ?? null })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { success: false, error: "Failed to reject booking." };
+  }
+
+  await supabase
+    .from("available_slots")
+    .update({ status: "available" })
+    .eq("id", booking.slot_id);
+
+  void sendRejectionEmail(booking, reason);
+
+  revalidatePath(`/admin/bookings/${bookingId}`);
+  revalidatePath("/admin");
+  return { success: true };
 }
 
-export async function cancelBooking() {
-  // TODO: cancel booking
+// ── Cancel booking (admin) ────────────────────────────────────────────────────
+
+export async function cancelBooking(
+  bookingId: string
+): Promise<{ success: boolean; error?: string }> {
+  const { data: booking, error: bookingFetchError } = await supabase
+    .from("bookings")
+    .select("*, available_slots(*)")
+    .eq("id", bookingId)
+    .single();
+
+  if (bookingFetchError || !booking) {
+    return { success: false, error: "Booking not found." };
+  }
+
+  const { error: updateError } = await supabase
+    .from("bookings")
+    .update({ status: "cancelled" })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { success: false, error: "Failed to cancel booking." };
+  }
+
+  await supabase
+    .from("available_slots")
+    .update({ status: "available" })
+    .eq("id", booking.slot_id);
+
+  // Delete calendar event if one exists — stubs handle gracefully
+  if (booking.google_event_id) {
+    try {
+      await deleteCalendarEvent(booking.google_event_id);
+    } catch (err) {
+      console.error("[calendar] deleteCalendarEvent failed:", err);
+    }
+  }
+
+  void sendCancellationEmail(booking, booking.available_slots);
+
+  revalidatePath(`/admin/bookings/${bookingId}`);
+  revalidatePath("/admin");
+  return { success: true };
 }

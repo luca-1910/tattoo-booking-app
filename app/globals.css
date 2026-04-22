@@ -44,6 +44,16 @@
   --text-3xl:  1.875rem;
   --text-4xl:  2.25rem;
   --text-5xl:  3rem;
+
+  /* shadcn component tokens (mapped to our palette) */
+  --background:         #F5F0EB;
+  --foreground:         #1A1714;
+  --popover:            #EDEAE5;
+  --popover-foreground: #1A1714;
+  --muted:              #E2DDD7;
+  --muted-foreground:   #6B6560;
+  --border:             #D6D0CA;
+  --radius:             0.25rem;
 }
 
 body {
