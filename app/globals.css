@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Backgrounds */
+  --color-bg:           #F5F0EB;
+  --color-bg-surface:   #EDEAE5;
+  --color-bg-inset:     #E2DDD7;
+
+  /* Foregrounds */
+  --color-fg:           #1A1714;
+  --color-fg-muted:     #6B6560;
+  --color-fg-subtle:    #A39E99;
+
+  /* Accent */
+  --color-accent:       #C0392B;
+  --color-accent-hover: #A93226;
+  --color-accent-soft:  #F5D5D2;
+
+  /* Borders */
+  --color-border:       #D6D0CA;
+  --color-border-strong:#B5AFA9;
+
+  /* Status */
+  --color-pending:      #D4820A;
+  --color-pending-bg:   #FEF3C7;
+  --color-approved:     #1A7A4A;
+  --color-approved-bg:  #D1FAE5;
+  --color-rejected:     #B91C1C;
+  --color-rejected-bg:  #FEE2E2;
+  --color-cancelled:    #6B7280;
+  --color-cancelled-bg: #F3F4F6;
+  --color-available:    #1D4ED8;
+  --color-available-bg: #DBEAFE;
+
+  /* Typography scale */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+  --text-5xl:  3rem;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-ui), system-ui, sans-serif;
+  line-height: 1.6;
+}
