@@ -74,8 +74,8 @@ export async function getFreeBusy(
 
   const { data } = await calendar.freebusy.query({
     requestBody: {
-      timeMin: new Date(startDate).toISOString(),
-      timeMax: new Date(endDate).toISOString(),
+      timeMin: new Date(startDate + "T00:00:00Z").toISOString(),
+      timeMax: new Date(endDate + "T23:59:59Z").toISOString(),
       items: [{ id: "primary" }],
     },
   });

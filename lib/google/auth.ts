@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { createClient } from "@supabase/supabase-js";
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
+// Lazy — avoids module-level env access at build time (imported by API routes)
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
