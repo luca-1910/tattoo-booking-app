@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import { Calendar } from "lucide-react";
 
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -28,24 +29,37 @@ const sizeLabels: Record<string, string> = {
   full_piece: "Full piece",
 };
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+type BadgeCfg = { label: string; bg: string; color: string };
+const badges: Record<string, BadgeCfg> = {
+  pending:   { label: "Under review",   bg: "var(--color-pending-bg)",   color: "var(--color-pending)"   },
+  approved:  { label: "Confirmed",      bg: "var(--color-approved-bg)",  color: "var(--color-approved)"  },
+  rejected:  { label: "Not confirmed",  bg: "var(--color-rejected-bg)",  color: "var(--color-rejected)"  },
+  cancelled: { label: "Cancelled",      bg: "var(--color-cancelled-bg)", color: "var(--color-cancelled)" },
+};
+
+function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "baseline",
-        gap: 16,
-        padding: "10px 0",
-        borderBottom: "1px solid var(--color-border)",
-      }}
-    >
-      <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--text-sm)", color: "var(--color-fg-muted)", flexShrink: 0 }}>
+    <div>
+      <div style={{
+        fontFamily: "var(--font-ui)",
+        fontWeight: 500,
+        fontSize: 12,
+        color: "var(--color-fg-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+        marginBottom: 4,
+      }}>
         {label}
-      </span>
-      <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--text-sm)", color: "var(--color-fg)", textAlign: "right" }}>
+      </div>
+      <div style={{
+        fontFamily: "var(--font-ui)",
+        fontWeight: 400,
+        fontSize: 15,
+        color: "var(--color-fg)",
+        lineHeight: 1.4,
+      }}>
         {value}
-      </span>
+      </div>
     </div>
   );
 }
@@ -65,22 +79,37 @@ export default async function StatusPage({ params }: { params: { token: string }
     supabase.from("settings").select("studio_address, instagram_url").single(),
   ]);
 
-  const studioAddress = settingsRow?.studio_address ?? "";
-  const instagramUrl = settingsRow?.instagram_url ?? "";
+  const instagramUrl = settingsRow?.instagram_url ?? process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "";
 
-  // Not found
   if (!booking) {
     return (
-      <main style={{ minHeight: "100vh", background: "var(--color-bg)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 400 }}>
-          <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "var(--text-2xl)", color: "var(--color-fg)", marginBottom: 12 }}>
+      <main style={{
+        minHeight: "100vh",
+        background: "var(--color-bg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "80px 24px",
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <h1 style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 700,
+            fontSize: 32,
+            color: "var(--color-fg)",
+            letterSpacing: "-0.02em",
+            marginBottom: 16,
+          }}>
             Booking not found
           </h1>
-          <p style={{ fontFamily: "var(--font-ui)", color: "var(--color-fg-muted)", marginBottom: 24 }}>
-            This link may be invalid or expired.
-          </p>
-          <Link href="/booking" style={{ fontFamily: "var(--font-ui)", fontWeight: 500, fontSize: "var(--text-sm)", color: "var(--color-accent)", textDecoration: "none" }}>
-            Book an appointment →
+          <Link href="/booking" style={{
+            fontFamily: "var(--font-ui)",
+            fontWeight: 500,
+            fontSize: "var(--text-sm)",
+            color: "var(--color-accent)",
+            textDecoration: "none",
+          }}>
+            Submit a new booking →
           </Link>
         </div>
       </main>
@@ -89,86 +118,262 @@ export default async function StatusPage({ params }: { params: { token: string }
 
   const slot = booking.available_slots;
   const firstName = booking.client_name.split(" ")[0];
-  const dateLabel = slot ? `${formatDate(slot.date)} at ${formatTime(slot.start_time)}` : "";
-
-  type BadgeCfg = { label: string; bg: string; color: string };
-  const badges: Record<string, BadgeCfg> = {
-    pending:   { label: "Under review", bg: "var(--color-pending-bg)",   color: "var(--color-pending)"   },
-    approved:  { label: "Confirmed",    bg: "var(--color-approved-bg)",  color: "var(--color-approved)"  },
-    rejected:  { label: "Not confirmed",bg: "var(--color-rejected-bg)",  color: "var(--color-rejected)"  },
-    cancelled: { label: "Cancelled",    bg: "var(--color-cancelled-bg)", color: "var(--color-cancelled)" },
-  };
   const badge = badges[booking.status] ?? badges.pending;
 
-  return (
-    <main style={{ minHeight: "100vh", background: "var(--color-bg)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 16px" }}>
-      <div style={{ width: "100%", maxWidth: 480, background: "var(--color-bg-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
+  const dateLabel = slot ? formatDate(slot.date) : "";
+  const startTimeLabel = slot ? formatTime(slot.start_time) : "";
+  const endTimeLabel = slot ? formatTime(slot.end_time) : "";
+  const slotLabel = slot ? `${dateLabel} · ${startTimeLabel} – ${endTimeLabel}` : "";
 
-        {/* Header */}
-        <div style={{ padding: "28px 28px 20px" }}>
-          <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 900, fontSize: "var(--text-2xl)", color: "var(--color-fg)", letterSpacing: "-0.02em", marginBottom: 4 }}>
-            {firstName}&apos;s booking
-          </h1>
+  return (
+    <main style={{
+      minHeight: "100vh",
+      background: "var(--color-bg)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      padding: "48px 24px",
+    }}>
+      <div style={{ width: "100%", maxWidth: 560 }}>
+
+        {/* Status card */}
+        <div style={{
+          background: "var(--color-bg-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: 8,
+          padding: 32,
+        }}>
+
+          {/* Header row */}
+          <div style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 16,
+          }}>
+            <h1 style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              fontSize: 24,
+              color: "var(--color-fg)",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.2,
+            }}>
+              Booking for {firstName}
+            </h1>
+            <span style={{
+              display: "inline-block",
+              fontFamily: "var(--font-ui)",
+              fontWeight: 500,
+              fontSize: "var(--text-sm)",
+              padding: "4px 12px",
+              borderRadius: 4,
+              background: badge.bg,
+              color: badge.color,
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}>
+              {badge.label}
+            </span>
+          </div>
+
+          {/* Slot row */}
           {slot && (
-            <p style={{ fontFamily: "var(--font-ui)", fontSize: "var(--text-sm)", color: "var(--color-fg-muted)", marginBottom: 14 }}>
-              {dateLabel}
-            </p>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 24,
+            }}>
+              <Calendar size={16} color="var(--color-fg-muted)" strokeWidth={1.75} />
+              <span style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 500,
+                fontSize: 16,
+                color: "var(--color-fg)",
+              }}>
+                {slotLabel}
+              </span>
+            </div>
           )}
 
-          {/* Status badge */}
-          <span style={{ display: "inline-block", fontFamily: "var(--font-ui)", fontWeight: 500, fontSize: "var(--text-sm)", padding: "4px 12px", borderRadius: 4, background: badge.bg, color: badge.color, marginBottom: 14 }}>
-            {badge.label}
-          </span>
+          {/* Divider */}
+          <div style={{ height: 1, background: "var(--color-border)", marginBottom: 24 }} />
 
           {/* Status message */}
-          <div style={{ fontFamily: "var(--font-ui)", fontSize: "var(--text-sm)", color: "var(--color-fg-muted)", lineHeight: 1.6 }}>
-            {booking.status === "pending" && (
-              <p>We&apos;ve received your booking request and will confirm shortly.</p>
-            )}
-            {booking.status === "approved" && (
-              <p>
-                Your appointment is confirmed. See you on{" "}
-                <strong style={{ color: "var(--color-fg)" }}>{dateLabel}</strong>{" "}
-                at <strong style={{ color: "var(--color-fg)" }}>{studioAddress}</strong>.
-              </p>
-            )}
-            {booking.status === "rejected" && (
-              <div>
-                <p>Unfortunately we couldn&apos;t confirm this booking.</p>
-                {booking.rejection_reason && (
-                  <p style={{ marginTop: 8, fontStyle: "italic" }}>
-                    &ldquo;{booking.rejection_reason}&rdquo;
-                  </p>
-                )}
+          {booking.status === "pending" && (
+            <div style={{
+              borderLeft: "3px solid var(--color-pending)",
+              background: "var(--color-pending-bg)",
+              padding: 16,
+              borderRadius: 4,
+              marginBottom: 24,
+            }}>
+              <div style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 500,
+                fontSize: 14,
+                color: "var(--color-pending)",
+                marginBottom: 6,
+              }}>
+                Under review
               </div>
-            )}
-            {booking.status === "cancelled" && (
-              <p>This appointment has been cancelled.</p>
-            )}
+              <div style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 400,
+                fontSize: 14,
+                color: "var(--color-fg)",
+                lineHeight: 1.6,
+              }}>
+                Phoebe has received your request and will be in touch via email shortly. This usually takes 1–2 business days.
+              </div>
+            </div>
+          )}
+
+          {booking.status === "approved" && (
+            <div style={{
+              borderLeft: "3px solid var(--color-approved)",
+              background: "var(--color-approved-bg)",
+              padding: 16,
+              borderRadius: 4,
+              marginBottom: 24,
+            }}>
+              <div style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 500,
+                fontSize: 14,
+                color: "var(--color-approved)",
+                marginBottom: 6,
+              }}>
+                Confirmed!
+              </div>
+              <div style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 400,
+                fontSize: 14,
+                color: "var(--color-fg)",
+                lineHeight: 1.6,
+              }}>
+                See you at 270 Unley Road, Hyde Park on {dateLabel} at {startTimeLabel}.
+              </div>
+            </div>
+          )}
+
+          {booking.status === "rejected" && (
+            <div style={{
+              borderLeft: "3px solid var(--color-rejected)",
+              background: "var(--color-rejected-bg)",
+              padding: 16,
+              borderRadius: 4,
+              marginBottom: 24,
+            }}>
+              <div style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 500,
+                fontSize: 14,
+                color: "var(--color-rejected)",
+                marginBottom: 6,
+              }}>
+                Not confirmed
+              </div>
+              {booking.rejection_reason && (
+                <div style={{
+                  fontFamily: "var(--font-ui)",
+                  fontWeight: 400,
+                  fontSize: 14,
+                  color: "var(--color-fg-muted)",
+                  fontStyle: "italic",
+                  lineHeight: 1.6,
+                }}>
+                  &ldquo;{booking.rejection_reason}&rdquo;
+                </div>
+              )}
+            </div>
+          )}
+
+          {booking.status === "cancelled" && (
+            <div style={{
+              borderLeft: "3px solid var(--color-border-strong)",
+              background: "var(--color-bg-inset)",
+              padding: 16,
+              borderRadius: 4,
+              marginBottom: 24,
+            }}>
+              <div style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 500,
+                fontSize: 14,
+                color: "var(--color-fg)",
+                marginBottom: 6,
+              }}>
+                Cancelled
+              </div>
+              <div style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 400,
+                fontSize: 14,
+                color: "var(--color-fg-muted)",
+                lineHeight: 1.6,
+              }}>
+                Reach out on Instagram to rebook.
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div style={{ height: 1, background: "var(--color-border)", marginBottom: 24 }} />
+
+          {/* Booking summary grid */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px 24px",
+          }}>
+            <SummaryItem label="Tattoo" value={booking.tattoo_description} />
+            <SummaryItem label="Placement" value={booking.body_placement} />
+            <SummaryItem label="Size" value={sizeLabels[booking.size] ?? booking.size} />
+            <SummaryItem label="Price" value={`R$ ${Number(booking.agreed_price).toFixed(2)}`} />
           </div>
         </div>
 
-        {/* Divider */}
-        <div style={{ height: 1, background: "var(--color-border)" }} />
-
-        {/* Booking details */}
-        <div style={{ padding: "4px 28px" }}>
-          <DetailRow label="Tattoo" value={booking.tattoo_description} />
-          <DetailRow label="Placement" value={booking.body_placement} />
-          <DetailRow label="Size" value={sizeLabels[booking.size] ?? booking.size} />
-          <DetailRow label="Price" value={`R$ ${Number(booking.agreed_price).toFixed(2)}`} />
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding: "16px 28px 24px", borderTop: "1px solid var(--color-border)", marginTop: 8 }}>
+        {/* Help section */}
+        <div style={{
+          marginTop: 32,
+          textAlign: "center",
+        }}>
+          <div style={{
+            fontFamily: "var(--font-ui)",
+            fontWeight: 500,
+            fontSize: 14,
+            color: "var(--color-fg-muted)",
+            marginBottom: 6,
+          }}>
+            Have questions?
+          </div>
           {instagramUrl ? (
-            <a href={instagramUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "var(--font-ui)", fontSize: "var(--text-sm)", color: "var(--color-fg-muted)", textDecoration: "none" }}>
-              Questions? Reach us on Instagram →
+            <a
+              href={instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 500,
+                fontSize: 14,
+                color: "var(--color-accent)",
+                textDecoration: "none",
+              }}
+            >
+              Message Phoebe on Instagram →
             </a>
           ) : (
-            <p style={{ fontFamily: "var(--font-ui)", fontSize: "var(--text-sm)", color: "var(--color-fg-muted)" }}>
-              Questions? Contact us directly.
-            </p>
+            <span style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: 14,
+              color: "var(--color-fg-muted)",
+            }}>
+              Message Phoebe on Instagram
+            </span>
           )}
         </div>
       </div>
