@@ -60,3 +60,15 @@ body {
   background: white;
   color: var(--color-fg);
 }
+
+.input-field {
+  transition: border-color 0.15s;
+}
+.input-field:focus {
+  border-color: var(--color-fg);
+}
+
+.select-no-arrow {
+  appearance: none;
+  -webkit-appearance: none;
+}
