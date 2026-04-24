@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { submitBooking } from "@/lib/actions/booking";
 import type { AvailableSlot } from "@/types/database";
 import Link from "next/link";
+import { Upload, CheckCircle, Loader2, ChevronDown } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,7 +27,11 @@ function formatTime(timeStr: string) {
   const [h, m] = timeStr.split(":").map(Number);
   const d = new Date();
   d.setHours(h, m, 0);
-  return d.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+  return d.toLocaleTimeString("en-GB", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 function groupByDate(slots: AvailableSlot[]) {
@@ -59,16 +64,21 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const INSTAGRAM_URL =
+  process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/missmay.tattoos";
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
   const [proofPath, setProofPath] = useState<string | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
+  const [proofFilename, setProofFilename] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [statusToken, setStatusToken] = useState<string | null>(null);
+  const [clientFirstName, setClientFirstName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -89,6 +99,7 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
     setUploadError(null);
     setProofPath(null);
     setProofPreview(null);
+    setProofFilename(null);
 
     if (!file.type.startsWith("image/")) {
       setUploadError("Only image files are accepted.");
@@ -100,12 +111,12 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
     }
 
     setProofPreview(URL.createObjectURL(file));
+    setProofFilename(file.name);
     setUploadProgress(0);
 
     const supabase = createClient();
     const path = `proofs/${Date.now()}-${file.name}`;
 
-    // Simulate progress during upload (Supabase JS client doesn't stream progress)
     const progressInterval = setInterval(() => {
       setUploadProgress((p) => (p !== null && p < 90 ? p + 10 : p));
     }, 200);
@@ -159,6 +170,7 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
       return;
     }
 
+    setClientFirstName(values.client_name.split(" ")[0]);
     setStatusToken(result.status_token);
   }
 
@@ -171,42 +183,89 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
           background: "var(--color-bg-surface)",
           border: "1px solid var(--color-border)",
           borderRadius: 8,
-          padding: 32,
-          maxWidth: 480,
-          margin: "0 auto",
+          padding: "40px 32px",
           textAlign: "center",
         }}
       >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: 20,
+          }}
+        >
+          <CheckCircle
+            size={56}
+            strokeWidth={1.5}
+            style={{ color: "var(--color-approved)" }}
+          />
+        </div>
+
         <h2
           style={{
             fontFamily: "var(--font-display)",
             fontWeight: 700,
-            fontSize: "var(--text-2xl)",
+            fontSize: 32,
+            letterSpacing: "-0.02em",
             color: "var(--color-fg)",
             marginBottom: 12,
           }}
         >
-          Booking submitted!
+          Booking received
         </h2>
-        <p style={{ color: "var(--color-fg-muted)", marginBottom: 24 }}>
-          You&apos;ll receive a confirmation email shortly.
-        </p>
-        <Link
-          href={`/status/${statusToken}`}
+
+        <p
           style={{
-            display: "inline-block",
-            background: "var(--color-accent)",
-            color: "#fff",
             fontFamily: "var(--font-ui)",
-            fontWeight: 500,
-            fontSize: "var(--text-sm)",
-            padding: "10px 20px",
-            borderRadius: 4,
-            textDecoration: "none",
+            fontWeight: 400,
+            fontSize: 16,
+            color: "var(--color-fg-muted)",
+            lineHeight: 1.6,
+            maxWidth: 360,
+            margin: "0 auto 32px",
           }}
         >
-          View booking status
-        </Link>
+          Thanks {clientFirstName}. Phoebe will review your request and be in
+          touch via email shortly.
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <Link
+            href={`/status/${statusToken}`}
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontWeight: 500,
+              fontSize: 14,
+              padding: "10px 20px",
+              borderRadius: 4,
+              background: "var(--color-accent)",
+              color: "#fff",
+              textDecoration: "none",
+              display: "inline-block",
+            }}
+          >
+            Track your booking →
+          </Link>
+          <Link
+            href="/"
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontWeight: 400,
+              fontSize: 14,
+              color: "var(--color-fg-muted)",
+              textDecoration: "none",
+            }}
+          >
+            Back to home
+          </Link>
+        </div>
       </div>
     );
   }
@@ -215,26 +274,35 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
+
       {/* ── Step 1: Slot selection ── */}
-      <section style={{ marginBottom: 40 }}>
-        <h2 style={sectionHeadingStyle}>Select a date &amp; time</h2>
+      <section style={{ marginBottom: 48 }}>
+        <p style={stepLabelStyle}>01 — CHOOSE A DATE</p>
 
         {dates.length === 0 ? (
-          <p style={{ color: "var(--color-fg-muted)" }}>
-            No slots available right now.{" "}
+          <p
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontWeight: 400,
+              fontSize: 16,
+              color: "var(--color-fg-muted)",
+              lineHeight: 1.6,
+            }}
+          >
+            No dates available right now.{" "}
             <a
-              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "#"}
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "var(--color-accent)" }}
+              style={{ color: "var(--color-accent)", textDecoration: "none" }}
             >
-              Follow us on Instagram
+              Follow Phoebe on Instagram
             </a>{" "}
-            to be notified when new dates open.
+            to be notified when new dates drop.
           </p>
         ) : (
           dates.map((date) => (
-            <div key={date} style={{ marginBottom: 24 }}>
+            <div key={date} style={{ marginBottom: 28 }}>
               <p style={dateHeadingStyle}>{formatDate(date)}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {grouped[date].map((slot) => {
@@ -245,16 +313,23 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
                       type="button"
                       onClick={() => setSelectedSlot(slot)}
                       style={{
-                        padding: "8px 16px",
+                        padding: "10px 20px",
                         borderRadius: 4,
-                        border: `1px solid ${active ? "var(--color-accent)" : "var(--color-border)"}`,
-                        background: active ? "var(--color-accent-soft)" : "var(--color-bg-surface)",
-                        color: active ? "var(--color-accent)" : "var(--color-fg)",
+                        border: `1px solid ${
+                          active ? "var(--color-accent)" : "var(--color-border)"
+                        }`,
+                        background: active
+                          ? "var(--color-accent-soft)"
+                          : "var(--color-bg-surface)",
+                        color: active
+                          ? "var(--color-accent)"
+                          : "var(--color-fg)",
                         fontFamily: "var(--font-ui)",
                         fontWeight: active ? 500 : 400,
                         fontSize: "var(--text-sm)",
                         cursor: "pointer",
                         outline: "none",
+                        transition: "border-color 0.15s, background 0.15s, color 0.15s",
                       }}
                     >
                       {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
@@ -267,29 +342,37 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
         )}
       </section>
 
-      {/* ── Step 2: Booking details (shown once slot selected) ── */}
+      {/* ── Step 2: Booking details (revealed after slot selected) ── */}
       {selectedSlot && (
-        <section
-          style={{
-            background: "var(--color-bg-surface)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 8,
-            padding: 24,
-          }}
-        >
-          <h2 style={{ ...sectionHeadingStyle, marginBottom: 24 }}>Your details</h2>
+        <section>
+          <p style={stepLabelStyle}>02 — YOUR DETAILS</p>
 
-          <div style={gridStyle}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: "0 16px" }}>
             <Field label="Full name" error={errors.client_name?.message}>
-              <input {...register("client_name")} type="text" style={inputStyle} />
+              <input
+                {...register("client_name")}
+                type="text"
+                style={inputStyle}
+                className="input-field"
+              />
             </Field>
 
             <Field label="Email" error={errors.client_email?.message}>
-              <input {...register("client_email")} type="email" style={inputStyle} />
+              <input
+                {...register("client_email")}
+                type="email"
+                style={inputStyle}
+                className="input-field"
+              />
             </Field>
 
             <Field label="Phone" error={errors.client_phone?.message}>
-              <input {...register("client_phone")} type="tel" style={inputStyle} />
+              <input
+                {...register("client_phone")}
+                type="tel"
+                style={inputStyle}
+                className="input-field"
+              />
             </Field>
 
             <Field label="Instagram handle" error={errors.client_instagram?.message}>
@@ -298,31 +381,60 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
                 type="text"
                 placeholder="@handle"
                 style={inputStyle}
+                className="input-field"
               />
             </Field>
           </div>
 
-          <Field label="Tattoo description" error={errors.tattoo_description?.message}>
+          <Field
+            label="Tattoo description"
+            error={errors.tattoo_description?.message}
+          >
             <textarea
               {...register("tattoo_description")}
               rows={4}
               style={{ ...inputStyle, resize: "vertical" }}
+              className="input-field"
             />
           </Field>
 
-          <div style={gridStyle}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: "0 16px" }}>
             <Field label="Body placement" error={errors.body_placement?.message}>
-              <input {...register("body_placement")} type="text" style={inputStyle} />
+              <input
+                {...register("body_placement")}
+                type="text"
+                style={inputStyle}
+                className="input-field"
+              />
             </Field>
 
             <Field label="Size" error={errors.size?.message}>
-              <select {...register("size")} style={inputStyle}>
-                <option value="">Select size</option>
-                <option value="small">Small</option>
-                <option value="medium">Medium</option>
-                <option value="large">Large</option>
-                <option value="full_piece">Full piece</option>
-              </select>
+              <div style={{ position: "relative" }}>
+                <select
+                  {...register("size")}
+                  style={{ ...inputStyle, paddingRight: 36 }}
+                  className="input-field select-no-arrow"
+                >
+                  <option value="">Select size</option>
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
+                  <option value="full_piece">Full piece</option>
+                </select>
+                <div
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                    color: "var(--color-fg-muted)",
+                    display: "flex",
+                  }}
+                >
+                  <ChevronDown size={16} />
+                </div>
+              </div>
             </Field>
 
             <Field label="Agreed price (R$)" error={errors.agreed_price?.message}>
@@ -332,6 +444,7 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
                 min="0"
                 step="0.01"
                 style={inputStyle}
+                className="input-field"
               />
             </Field>
           </div>
@@ -339,71 +452,154 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
           {/* Payment proof upload */}
           <div style={{ marginBottom: 20 }}>
             <label style={labelStyle}>Payment proof</label>
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+
             <div
+              onClick={() => fileRef.current?.click()}
               style={{
-                border: "1px solid var(--color-border)",
+                border: "2px dashed var(--color-border)",
                 borderRadius: 4,
-                padding: 16,
-                background: "var(--color-bg-inset)",
+                padding: "28px 24px",
+                cursor: "pointer",
+                background: "var(--color-bg-surface)",
+                textAlign: "center",
+                transition: "border-color 0.15s",
               }}
             >
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                style={{ display: "block", marginBottom: proofPreview ? 12 : 0 }}
-              />
-              {proofPreview && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={proofPreview}
-                  alt="Payment proof preview"
-                  style={{
-                    maxHeight: 120,
-                    maxWidth: "100%",
-                    borderRadius: 4,
-                    marginTop: 8,
-                    objectFit: "contain",
-                  }}
-                />
-              )}
-              {uploadProgress !== null && uploadProgress < 100 && (
-                <div style={{ marginTop: 8 }}>
-                  <div
+              {!proofPreview ? (
+                <>
+                  <Upload
+                    size={24}
                     style={{
-                      height: 4,
-                      background: "var(--color-border)",
-                      borderRadius: 2,
-                      overflow: "hidden",
+                      color: "var(--color-fg-subtle)",
+                      display: "block",
+                      margin: "0 auto 8px",
+                    }}
+                  />
+                  <p
+                    style={{
+                      fontFamily: "var(--font-ui)",
+                      fontWeight: 500,
+                      fontSize: 14,
+                      color: "var(--color-fg-muted)",
                     }}
                   >
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${uploadProgress}%`,
-                        background: "var(--color-accent)",
-                        transition: "width 0.2s ease",
-                      }}
-                    />
+                    Upload payment screenshot
+                  </p>
+                </>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    textAlign: "left",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={proofPreview}
+                    alt="Payment proof preview"
+                    style={{
+                      width: 52,
+                      height: 52,
+                      objectFit: "cover",
+                      borderRadius: 4,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {uploadProgress !== null && uploadProgress < 100 ? (
+                      <>
+                        <p
+                          style={{
+                            fontFamily: "var(--font-ui)",
+                            fontSize: 13,
+                            color: "var(--color-fg-muted)",
+                            marginBottom: 6,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {proofFilename}
+                        </p>
+                        <div
+                          style={{
+                            height: 4,
+                            background: "var(--color-border)",
+                            borderRadius: 2,
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: "100%",
+                              width: `${uploadProgress}%`,
+                              background: "var(--color-accent)",
+                              transition: "width 0.2s ease",
+                            }}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div
+                        style={{ display: "flex", alignItems: "center", gap: 8 }}
+                      >
+                        <p
+                          style={{
+                            fontFamily: "var(--font-ui)",
+                            fontSize: 13,
+                            color: "var(--color-fg)",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          {proofFilename}
+                        </p>
+                        <CheckCircle
+                          size={18}
+                          style={{ color: "var(--color-approved)", flexShrink: 0 }}
+                        />
+                      </div>
+                    )}
                   </div>
-                  <p style={{ ...hintStyle, marginTop: 4 }}>Uploading…</p>
                 </div>
               )}
-              {uploadProgress === 100 && (
-                <p style={{ ...hintStyle, color: "var(--color-approved)", marginTop: 6 }}>
-                  ✓ Uploaded
-                </p>
-              )}
-              {uploadError && <p style={errorStyle}>{uploadError}</p>}
             </div>
+
+            {uploadError && <p style={errorStyle}>{uploadError}</p>}
+            <p
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: 12,
+                color: "var(--color-fg-subtle)",
+                marginTop: 6,
+              }}
+            >
+              Max 5MB
+            </p>
           </div>
 
-          <Field label="Additional notes (optional)" error={errors.notes?.message}>
+          <Field
+            label="Additional notes (optional)"
+            error={errors.notes?.message}
+          >
             <textarea
               {...register("notes")}
               rows={3}
               style={{ ...inputStyle, resize: "vertical" }}
+              className="input-field"
             />
           </Field>
 
@@ -416,21 +612,34 @@ export default function BookingForm({ slots }: { slots: AvailableSlot[] }) {
             disabled={isSubmitting || uploadProgress !== 100}
             style={{
               width: "100%",
-              padding: "12px 20px",
+              padding: 16,
               background:
                 isSubmitting || uploadProgress !== 100
                   ? "var(--color-border-strong)"
                   : "var(--color-accent)",
               color: "#fff",
-              fontFamily: "var(--font-ui)",
-              fontWeight: 500,
-              fontSize: "var(--text-sm)",
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              fontSize: 16,
               borderRadius: 4,
               border: "none",
-              cursor: isSubmitting || uploadProgress !== 100 ? "not-allowed" : "pointer",
+              cursor:
+                isSubmitting || uploadProgress !== 100 ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              letterSpacing: "-0.01em",
             }}
           >
-            {isSubmitting ? "Submitting…" : "Submit booking"}
+            {isSubmitting ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit booking"
+            )}
           </button>
         </section>
       )}
@@ -460,23 +669,24 @@ function Field({
 
 // ── Shared styles ──────────────────────────────────────────────────────────────
 
-const sectionHeadingStyle: React.CSSProperties = {
-  fontFamily: "var(--font-display)",
-  fontWeight: 700,
-  fontSize: "var(--text-xl)",
-  color: "var(--color-fg)",
-  letterSpacing: "-0.02em",
-  marginBottom: 16,
+const stepLabelStyle: React.CSSProperties = {
+  fontFamily: "var(--font-ui)",
+  fontWeight: 500,
+  fontSize: 11,
+  color: "var(--color-fg-muted)",
+  letterSpacing: "0.15em",
+  textTransform: "uppercase",
+  marginBottom: 24,
 };
 
 const dateHeadingStyle: React.CSSProperties = {
-  fontFamily: "var(--font-ui)",
-  fontWeight: 500,
-  fontSize: "var(--text-sm)",
-  color: "var(--color-fg-muted)",
-  marginBottom: 8,
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
+  fontFamily: "var(--font-display)",
+  fontWeight: 700,
+  fontSize: 18,
+  color: "var(--color-fg)",
+  letterSpacing: "-0.01em",
+  lineHeight: 1.2,
+  marginBottom: 12,
 };
 
 const labelStyle: React.CSSProperties = {
@@ -506,16 +716,4 @@ const errorStyle: React.CSSProperties = {
   fontSize: "var(--text-sm)",
   color: "var(--color-rejected)",
   marginTop: 4,
-};
-
-const hintStyle: React.CSSProperties = {
-  fontFamily: "var(--font-ui)",
-  fontSize: "var(--text-sm)",
-  color: "var(--color-fg-subtle)",
-};
-
-const gridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-  gap: "0 16px",
 };

@@ -52,3 +52,15 @@ body {
   font-family: var(--font-ui), system-ui, sans-serif;
   line-height: 1.6;
 }
+
+.input-field {
+  transition: border-color 0.15s;
+}
+.input-field:focus {
+  border-color: var(--color-fg);
+}
+
+.select-no-arrow {
+  appearance: none;
+  -webkit-appearance: none;
+}
