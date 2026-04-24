@@ -10,17 +10,19 @@ export default function LogoutButton() {
     <button
       onClick={() => startTransition(() => logout())}
       disabled={pending}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.6)"; }}
       style={{
         background: "transparent",
-        border: "1px solid rgba(255,255,255,0.2)",
-        color: "rgba(255,255,255,0.7)",
+        border: "none",
+        color: "rgba(255,255,255,0.6)",
         fontFamily: "var(--font-ui)",
         fontWeight: 500,
-        fontSize: "var(--text-sm)",
-        padding: "6px 14px",
-        borderRadius: 4,
+        fontSize: 14,
+        padding: "6px 0",
         cursor: pending ? "not-allowed" : "pointer",
         opacity: pending ? 0.6 : 1,
+        transition: "color 0.15s",
       }}
     >
       {pending ? "Signing out…" : "Logout"}

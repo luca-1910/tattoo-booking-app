@@ -21,12 +21,12 @@ type Props = {
 
 // ── Shared button styles ──────────────────────────────────────────────────────
 
-function primaryBtn(disabled?: boolean): React.CSSProperties {
+function approveBtn(disabled?: boolean): React.CSSProperties {
   return {
-    fontFamily: "var(--font-ui)",
-    fontWeight: 500,
-    fontSize: "var(--text-sm)",
-    padding: "10px 20px",
+    fontFamily: "var(--font-display)",
+    fontWeight: 700,
+    fontSize: 15,
+    padding: "12px 20px",
     borderRadius: 4,
     border: "none",
     background: disabled ? "var(--color-accent-hover)" : "var(--color-accent)",
@@ -41,7 +41,7 @@ function secondaryBtn(disabled?: boolean): React.CSSProperties {
   return {
     fontFamily: "var(--font-ui)",
     fontWeight: 500,
-    fontSize: "var(--text-sm)",
+    fontSize: 14,
     padding: "10px 20px",
     borderRadius: 4,
     border: "1px solid var(--color-border-strong)",
@@ -53,6 +53,22 @@ function secondaryBtn(disabled?: boolean): React.CSSProperties {
   };
 }
 
+function rejectConfirmBtn(disabled?: boolean): React.CSSProperties {
+  return {
+    fontFamily: "var(--font-ui)",
+    fontWeight: 500,
+    fontSize: 14,
+    padding: "8px 16px",
+    borderRadius: 4,
+    border: "none",
+    background: "var(--color-rejected)",
+    color: "#fff",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.65 : 1,
+    flexGrow: 1,
+  };
+}
+
 // ── Payment proof lightbox ────────────────────────────────────────────────────
 
 function ProofLightbox({ proofUrl }: { proofUrl: string }) {
@@ -60,6 +76,17 @@ function ProofLightbox({ proofUrl }: { proofUrl: string }) {
 
   return (
     <>
+      <p style={{
+        fontFamily: "var(--font-ui)",
+        fontWeight: 500,
+        fontSize: 12,
+        color: "var(--color-fg-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+        marginBottom: 8,
+      }}>
+        Payment proof
+      </p>
       <button
         onClick={() => setOpen(true)}
         style={{
@@ -71,7 +98,6 @@ function ProofLightbox({ proofUrl }: { proofUrl: string }) {
           overflow: "hidden",
           cursor: "zoom-in",
           background: "none",
-          marginTop: 16,
         }}
         title="View payment proof"
       >
@@ -164,50 +190,43 @@ function CancelDialog({
         <Dialog.Content
           className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm px-4 outline-none"
         >
-          <div
-            style={{
-              background: "var(--color-bg-surface)",
-              border: "1px solid var(--color-border)",
-              borderRadius: 8,
-              padding: 24,
-            }}
-          >
-            <Dialog.Title
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: "var(--text-lg)",
-                color: "var(--color-fg)",
-                marginBottom: 8,
-              }}
-            >
+          <div style={{
+            background: "var(--color-bg-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: 8,
+            padding: 24,
+          }}>
+            <Dialog.Title style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              fontSize: 18,
+              color: "var(--color-fg)",
+              marginBottom: 8,
+            }}>
               Cancel Appointment
             </Dialog.Title>
-            <Dialog.Description
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "var(--text-sm)",
-                color: "var(--color-fg-muted)",
-                marginBottom: 24,
-              }}
-            >
+            <Dialog.Description style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: 14,
+              color: "var(--color-fg-muted)",
+              marginBottom: 24,
+              lineHeight: 1.6,
+            }}>
               This will cancel the booking, free the slot, and delete the Google Calendar event. A cancellation email will be sent to the client.
             </Dialog.Description>
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <Dialog.Close asChild>
-                <button
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontWeight: 500,
-                    fontSize: "var(--text-sm)",
-                    padding: "8px 16px",
-                    borderRadius: 4,
-                    border: "1px solid var(--color-border)",
-                    background: "transparent",
-                    color: "var(--color-fg)",
-                    cursor: "pointer",
-                  }}
-                >
+                <button style={{
+                  fontFamily: "var(--font-ui)",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  padding: "8px 16px",
+                  borderRadius: 4,
+                  border: "1px solid var(--color-border)",
+                  background: "transparent",
+                  color: "var(--color-fg)",
+                  cursor: "pointer",
+                }}>
                   Keep
                 </button>
               </Dialog.Close>
@@ -217,7 +236,7 @@ function CancelDialog({
                 style={{
                   fontFamily: "var(--font-ui)",
                   fontWeight: 500,
-                  fontSize: "var(--text-sm)",
+                  fontSize: 14,
                   padding: "8px 16px",
                   borderRadius: 4,
                   border: "none",
@@ -274,56 +293,35 @@ export default function BookingActions({ booking, proofUrl }: Props) {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Payment proof */}
       {proofUrl && (
-        <div
-          style={{
-            background: "var(--color-bg-surface)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 8,
-            padding: 20,
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "var(--text-xs)",
-              fontWeight: 500,
-              color: "var(--color-fg-muted)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              marginBottom: 4,
-            }}
-          >
-            Payment Proof
-          </p>
+        <div style={{
+          background: "var(--color-bg-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: 8,
+          padding: 20,
+        }}>
           <ProofLightbox proofUrl={proofUrl} />
         </div>
       )}
 
       {/* Actions */}
-      <div
-        style={{
-          background: "var(--color-bg-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: 8,
-          padding: 20,
-        }}
-      >
+      <div style={{
+        background: "var(--color-bg-surface)",
+        border: "1px solid var(--color-border)",
+        borderRadius: 8,
+        padding: 20,
+      }}>
         {status === "pending" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <button
               onClick={handleApprove}
               disabled={isPending}
-              style={primaryBtn(isPending)}
+              style={approveBtn(isPending)}
             >
               {isPending ? "Approving…" : "Approve booking"}
             </button>
 
-            {/* Reject — inline expand */}
             {!rejectOpen ? (
-              <button
-                onClick={() => setRejectOpen(true)}
-                style={secondaryBtn()}
-              >
+              <button onClick={() => setRejectOpen(true)} style={secondaryBtn()}>
                 Reject booking
               </button>
             ) : (
@@ -335,7 +333,7 @@ export default function BookingActions({ booking, proofUrl }: Props) {
                   rows={3}
                   style={{
                     fontFamily: "var(--font-ui)",
-                    fontSize: "var(--text-sm)",
+                    fontSize: 14,
                     padding: "8px 12px",
                     borderRadius: 4,
                     border: "1px solid var(--color-border)",
@@ -345,6 +343,7 @@ export default function BookingActions({ booking, proofUrl }: Props) {
                     resize: "vertical",
                     outline: "none",
                     marginBottom: 8,
+                    boxSizing: "border-box",
                   }}
                 />
                 <div style={{ display: "flex", gap: 8 }}>
@@ -357,7 +356,7 @@ export default function BookingActions({ booking, proofUrl }: Props) {
                   <button
                     onClick={handleReject}
                     disabled={isPending}
-                    style={{ ...primaryBtn(isPending), width: "auto", padding: "8px 16px", flexGrow: 1 }}
+                    style={rejectConfirmBtn(isPending)}
                   >
                     {isPending ? "Rejecting…" : "Confirm rejection"}
                   </button>
@@ -369,58 +368,60 @@ export default function BookingActions({ booking, proofUrl }: Props) {
 
         {status === "approved" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div
-              style={{
+            {/* Approved info box */}
+            <div style={{
+              borderLeft: "3px solid var(--color-approved)",
+              background: "var(--color-approved-bg)",
+              padding: 16,
+              borderRadius: 4,
+            }}>
+              <p style={{
                 fontFamily: "var(--font-ui)",
-                fontSize: "var(--text-sm)",
-                color: "var(--color-approved)",
-                background: "var(--color-approved-bg)",
-                padding: "10px 14px",
-                borderRadius: 4,
                 fontWeight: 500,
-              }}
-            >
-              ✓ Approved — calendar event created
+                fontSize: 14,
+                color: "var(--color-approved)",
+                marginBottom: 4,
+              }}>
+                Confirmed
+              </p>
+              {booking.google_event_id && (
+                <a
+                  href={`https://calendar.google.com/calendar/event?eid=${booking.google_event_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontFamily: "var(--font-ui)",
+                    fontSize: 13,
+                    color: "var(--color-approved)",
+                    textDecoration: "underline",
+                    opacity: 0.8,
+                  }}
+                >
+                  View in Google Calendar →
+                </a>
+              )}
             </div>
 
-            {booking.google_event_id && (
-              <a
-                href={`https://calendar.google.com/calendar/event?eid=${booking.google_event_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "var(--text-sm)",
-                  color: "var(--color-fg-muted)",
-                  textDecoration: "underline",
-                }}
-              >
-                View in Google Calendar →
-              </a>
-            )}
-
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                padding: "10px 14px",
-                borderRadius: 4,
-                background: "var(--color-pending-bg)",
-                border: "1px solid var(--color-pending)",
-              }}
-            >
+            {/* Warning notice */}
+            <div style={{
+              display: "flex",
+              gap: 10,
+              padding: 12,
+              borderRadius: 4,
+              background: "var(--color-bg-inset)",
+              border: "1px solid var(--color-border)",
+            }}>
               <AlertTriangle
                 size={14}
                 style={{ color: "var(--color-pending)", flexShrink: 0, marginTop: 2 }}
               />
-              <p
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "var(--text-xs)",
-                  color: "var(--color-pending)",
-                  lineHeight: 1.5,
-                }}
-              >
+              <p style={{
+                fontFamily: "var(--font-ui)",
+                fontWeight: 400,
+                fontSize: 13,
+                color: "var(--color-fg-muted)",
+                lineHeight: 1.5,
+              }}>
                 Manage all appointments through this dashboard. Changes made directly in Google Calendar will not be reflected here.
               </p>
             </div>
@@ -433,32 +434,38 @@ export default function BookingActions({ booking, proofUrl }: Props) {
         )}
 
         {status === "rejected" && (
-          <div
-            style={{
+          <div style={{
+            borderLeft: "3px solid var(--color-rejected)",
+            background: "var(--color-rejected-bg)",
+            padding: 16,
+            borderRadius: 4,
+          }}>
+            <p style={{
               fontFamily: "var(--font-ui)",
-              fontSize: "var(--text-sm)",
+              fontWeight: 500,
+              fontSize: 14,
               color: "var(--color-rejected)",
-              background: "var(--color-rejected-bg)",
-              padding: "10px 14px",
-              borderRadius: 4,
-            }}
-          >
-            This booking was rejected.
+            }}>
+              Booking rejected
+            </p>
           </div>
         )}
 
         {status === "cancelled" && (
-          <div
-            style={{
+          <div style={{
+            borderLeft: "3px solid var(--color-border-strong)",
+            background: "var(--color-bg-inset)",
+            padding: 16,
+            borderRadius: 4,
+          }}>
+            <p style={{
               fontFamily: "var(--font-ui)",
-              fontSize: "var(--text-sm)",
-              color: "var(--color-cancelled)",
-              background: "var(--color-cancelled-bg)",
-              padding: "10px 14px",
-              borderRadius: 4,
-            }}
-          >
-            This booking was cancelled.
+              fontWeight: 500,
+              fontSize: 14,
+              color: "var(--color-fg-muted)",
+            }}>
+              Booking cancelled
+            </p>
           </div>
         )}
       </div>

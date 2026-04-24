@@ -51,7 +51,7 @@ function StatusBadge({ status }: { status: BookingStatus }) {
       color: s.color,
       fontFamily: "var(--font-ui)",
       fontWeight: 500,
-      fontSize: "var(--text-xs)",
+      fontSize: 12,
       textTransform: "capitalize",
     }}>
       {status}
@@ -64,7 +64,6 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
   const [sortKey, setSortKey] = useState<SortKey>("slot_date");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  // Stats
   const now = new Date();
   const pendingCount = bookings.filter(b => b.status === "pending").length;
   const confirmedThisMonth = bookings.filter(b => {
@@ -73,10 +72,8 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
-  // Filtering
   const filtered = activeTab === "all" ? bookings : bookings.filter(b => b.status === activeTab);
 
-  // Sorting
   const sorted = [...filtered].sort((a, b) => {
     let av: string, bv: string;
     if (sortKey === "slot_date") {
@@ -103,15 +100,15 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
 
   return (
     <div>
-      {/* Stats bar */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 32 }}>
-        <StatCard label="Pending review" value={pendingCount} accent />
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginBottom: 40 }}>
+        <StatCard label="Pending review" value={pendingCount} pending />
         <StatCard label="Confirmed this month" value={confirmedThisMonth} />
         <StatCard label="Total bookings" value={bookings.length} />
       </div>
 
       {/* Filter tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 24, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 0, marginBottom: 24, borderBottom: "1px solid var(--color-border)" }}>
         {STATUS_TABS.map(tab => {
           const active = activeTab === tab.value;
           return (
@@ -119,14 +116,16 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               style={{
-                padding: "6px 14px",
-                borderRadius: 4,
-                border: `1px solid ${active ? "var(--color-fg)" : "var(--color-border)"}`,
-                background: active ? "var(--color-fg)" : "transparent",
-                color: active ? "#fff" : "var(--color-fg-muted)",
+                padding: "8px 0",
+                marginRight: 24,
+                background: "none",
+                border: "none",
+                borderBottom: active ? "2px solid var(--color-fg)" : "2px solid transparent",
+                marginBottom: -1,
+                color: active ? "var(--color-fg)" : "var(--color-fg-muted)",
                 fontFamily: "var(--font-ui)",
                 fontWeight: 500,
-                fontSize: "var(--text-sm)",
+                fontSize: 14,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -135,11 +134,11 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
             >
               {tab.label}
               <span style={{
-                background: active ? "rgba(255,255,255,0.2)" : "var(--color-bg-inset)",
-                color: active ? "#fff" : "var(--color-fg-muted)",
-                borderRadius: 10,
-                padding: "0 7px",
-                fontSize: "var(--text-xs)",
+                background: "var(--color-bg-inset)",
+                color: "var(--color-fg-muted)",
+                borderRadius: 4,
+                padding: "1px 6px",
+                fontSize: 12,
                 fontWeight: 500,
               }}>
                 {tabCount(tab.value)}
@@ -150,8 +149,8 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
       </div>
 
       {/* Desktop table */}
-      <div style={{ overflowX: "auto" }} className="desktop-table">
-        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-ui)", fontSize: "var(--text-sm)" }}>
+      <div style={{ overflowX: "auto" }} className="dash-desktop-table">
+        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-ui)", fontSize: 14 }}>
           <thead>
             <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
               <Th>Client</Th>
@@ -171,19 +170,23 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
           <tbody>
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={8} style={{ padding: "32px 16px", textAlign: "center", color: "var(--color-fg-muted)" }}>
+                <td colSpan={8} style={{ padding: "32px 16px", textAlign: "center", color: "var(--color-fg-muted)", fontFamily: "var(--font-ui)" }}>
                   No bookings found.
                 </td>
               </tr>
             )}
             {sorted.map(b => (
-              <tr key={b.id} style={{ borderBottom: "1px solid var(--color-border)" }}>
+              <tr
+                key={b.id}
+                className="dash-row"
+                style={{ borderBottom: "1px solid var(--color-border)" }}
+              >
                 <Td>{b.client_name}</Td>
                 <Td style={{ color: "var(--color-fg-muted)" }}>{b.client_instagram}</Td>
                 <Td>
                   <span style={{ whiteSpace: "nowrap" }}>
                     {formatSlotDate(b.available_slots)}<br />
-                    <span style={{ color: "var(--color-fg-muted)", fontSize: "var(--text-xs)" }}>
+                    <span style={{ color: "var(--color-fg-muted)", fontSize: 12 }}>
                       {formatTime(b.available_slots.start_time)} – {formatTime(b.available_slots.end_time)}
                     </span>
                   </span>
@@ -199,13 +202,13 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
                     href={`/admin/bookings/${b.id}`}
                     style={{
                       display: "inline-block",
-                      padding: "5px 14px",
+                      padding: "6px 14px",
                       border: "1px solid var(--color-border)",
                       borderRadius: 4,
                       color: "var(--color-fg)",
                       fontFamily: "var(--font-ui)",
                       fontWeight: 500,
-                      fontSize: "var(--text-xs)",
+                      fontSize: 13,
                       textDecoration: "none",
                       whiteSpace: "nowrap",
                     }}
@@ -220,9 +223,11 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
       </div>
 
       {/* Mobile cards */}
-      <div className="mobile-cards" style={{ display: "none" }}>
+      <div className="dash-mobile-cards" style={{ display: "none" }}>
         {sorted.length === 0 && (
-          <p style={{ color: "var(--color-fg-muted)", textAlign: "center", padding: 32 }}>No bookings found.</p>
+          <p style={{ color: "var(--color-fg-muted)", textAlign: "center", padding: 32, fontFamily: "var(--font-ui)" }}>
+            No bookings found.
+          </p>
         )}
         {sorted.map(b => (
           <div key={b.id} style={{
@@ -232,43 +237,56 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
             padding: 16,
             marginBottom: 12,
           }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-              <div>
-                <p style={{ fontWeight: 500, color: "var(--color-fg)", marginBottom: 2 }}>{b.client_name}</p>
-                <p style={{ fontSize: "var(--text-xs)", color: "var(--color-fg-muted)" }}>{b.client_instagram}</p>
-              </div>
+            {/* Top: name + status */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+              <span style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+                fontSize: 16,
+                color: "var(--color-fg)",
+              }}>
+                {b.client_name}
+              </span>
               <StatusBadge status={b.status} />
             </div>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--color-fg-muted)", marginBottom: 4 }}>
+            {/* Mid: date + size */}
+            <p style={{ fontFamily: "var(--font-ui)", fontSize: 14, color: "var(--color-fg-muted)", marginBottom: 4 }}>
               {formatSlotDate(b.available_slots)} · {formatTime(b.available_slots.start_time)}
             </p>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--color-fg-muted)", marginBottom: 12 }}>
-              {SIZE_LABEL[b.size]} · R$ {Number(b.agreed_price).toFixed(2)}
+            <p style={{ fontFamily: "var(--font-ui)", fontSize: 14, color: "var(--color-fg-muted)", marginBottom: 12 }}>
+              {SIZE_LABEL[b.size]}
             </p>
-            <Link
-              href={`/admin/bookings/${b.id}`}
-              style={{
-                display: "inline-block",
-                padding: "6px 16px",
-                border: "1px solid var(--color-border)",
-                borderRadius: 4,
-                color: "var(--color-fg)",
-                fontFamily: "var(--font-ui)",
-                fontWeight: 500,
-                fontSize: "var(--text-sm)",
-                textDecoration: "none",
-              }}
-            >
-              View
-            </Link>
+            {/* Bottom: price + view */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontFamily: "var(--font-ui)", fontWeight: 500, fontSize: 14, color: "var(--color-fg)" }}>
+                R$ {Number(b.agreed_price).toFixed(2)}
+              </span>
+              <Link
+                href={`/admin/bookings/${b.id}`}
+                style={{
+                  display: "inline-block",
+                  padding: "6px 14px",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 4,
+                  color: "var(--color-fg)",
+                  fontFamily: "var(--font-ui)",
+                  fontWeight: 500,
+                  fontSize: 13,
+                  textDecoration: "none",
+                }}
+              >
+                View
+              </Link>
+            </div>
           </div>
         ))}
       </div>
 
       <style>{`
+        .dash-row:hover { background: var(--color-bg-inset); }
         @media (max-width: 700px) {
-          .desktop-table { display: none !important; }
-          .mobile-cards  { display: block !important; }
+          .dash-desktop-table { display: none !important; }
+          .dash-mobile-cards  { display: block !important; }
         }
       `}</style>
     </div>
@@ -277,18 +295,32 @@ export default function BookingsDashboard({ bookings }: { bookings: BookingWithS
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+function StatCard({ label, value, pending }: { label: string; value: number; pending?: boolean }) {
   return (
     <div style={{
       background: "var(--color-bg-surface)",
-      border: `1px solid ${accent ? "var(--color-accent-soft)" : "var(--color-border)"}`,
+      border: "1px solid var(--color-border)",
       borderRadius: 8,
-      padding: "20px 24px",
+      padding: 24,
     }}>
-      <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "var(--text-3xl)", color: accent ? "var(--color-accent)" : "var(--color-fg)", marginBottom: 4 }}>
+      <p style={{
+        fontFamily: "var(--font-display)",
+        fontWeight: 700,
+        fontSize: 48,
+        lineHeight: 1,
+        color: pending ? "var(--color-pending)" : "var(--color-fg)",
+        marginBottom: 10,
+      }}>
         {value}
       </p>
-      <p style={{ fontFamily: "var(--font-ui)", fontSize: "var(--text-sm)", color: "var(--color-fg-muted)" }}>
+      <p style={{
+        fontFamily: "var(--font-ui)",
+        fontWeight: 500,
+        fontSize: 12,
+        color: "var(--color-fg-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+      }}>
         {label}
       </p>
     </div>
@@ -304,10 +336,10 @@ function Th({ children, sortable, onClick }: { children?: React.ReactNode; sorta
         textAlign: "left",
         fontFamily: "var(--font-ui)",
         fontWeight: 500,
-        fontSize: "var(--text-xs)",
+        fontSize: 11,
         color: "var(--color-fg-muted)",
         textTransform: "uppercase",
-        letterSpacing: "0.05em",
+        letterSpacing: "0.08em",
         cursor: sortable ? "pointer" : "default",
         userSelect: "none",
         whiteSpace: "nowrap",

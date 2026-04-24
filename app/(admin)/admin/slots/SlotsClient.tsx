@@ -59,22 +59,45 @@ function groupByDate(slots: SlotRow[]): Map<string, SlotRow[]> {
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
-const badgeStyles: Record<SlotStatus, string> = {
-  available: "bg-[var(--color-available-bg)] text-[var(--color-available)]",
-  pending: "bg-[var(--color-pending-bg)] text-[var(--color-pending)]",
-  booked: "bg-[var(--color-approved-bg)] text-[var(--color-approved)]",
+const badgeStyles: Record<SlotStatus, { bg: string; color: string }> = {
+  available: { bg: "var(--color-available-bg)", color: "var(--color-available)" },
+  pending:   { bg: "var(--color-pending-bg)",   color: "var(--color-pending)"   },
+  booked:    { bg: "var(--color-approved-bg)",  color: "var(--color-approved)"  },
 };
 
 function StatusBadge({ status }: { status: SlotStatus }) {
+  const s = badgeStyles[status];
   return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badgeStyles[status]}`}
-      style={{ fontFamily: "var(--font-ui)" }}
-    >
+    <span style={{
+      display: "inline-block",
+      padding: "2px 8px",
+      borderRadius: 4,
+      background: s.bg,
+      color: s.color,
+      fontFamily: "var(--font-ui)",
+      fontWeight: 500,
+      fontSize: 12,
+      textTransform: "capitalize",
+    }}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
 }
+
+// ── Shared input style ────────────────────────────────────────────────────────
+
+const inputStyle: React.CSSProperties = {
+  background: "var(--color-bg-inset)",
+  border: "1px solid var(--color-border)",
+  borderRadius: 4,
+  color: "var(--color-fg)",
+  fontFamily: "var(--font-ui)",
+  fontSize: 14,
+  padding: "8px 12px",
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
+};
 
 // ── Create slot form ──────────────────────────────────────────────────────────
 
@@ -99,113 +122,78 @@ function CreateSlotForm() {
   }
 
   return (
-    <div
-      className="rounded-lg p-6 mb-8"
-      style={{
-        background: "var(--color-bg-surface)",
-        border: "1px solid var(--color-border)",
-      }}
-    >
-      <h2
-        className="text-base font-medium mb-4"
-        style={{ fontFamily: "var(--font-display)", color: "var(--color-fg)" }}
-      >
-        Add Slot
-      </h2>
+    <div style={{
+      background: "var(--color-bg-surface)",
+      border: "1px solid var(--color-border)",
+      borderRadius: 8,
+      padding: 24,
+      marginBottom: 32,
+    }}>
+      <p style={{
+        fontFamily: "var(--font-ui)",
+        fontWeight: 500,
+        fontSize: 11,
+        color: "var(--color-fg-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        marginBottom: 16,
+      }}>
+        Add a slot
+      </p>
       <form ref={formRef} onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="date"
-              className="text-sm font-medium"
-              style={{ color: "var(--color-fg-muted)", fontFamily: "var(--font-ui)" }}
-            >
-              Date
-            </label>
-            <input
-              id="date"
-              name="date"
-              type="date"
-              required
-              className="px-3 py-2 rounded text-sm"
-              style={{
-                background: "var(--color-bg-inset)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-fg)",
-                fontFamily: "var(--font-ui)",
-                outline: "none",
-              }}
-            />
+        <div className="slots-form-grid">
+          <div>
+            <label htmlFor="date" style={fieldLabelStyle}>Date</label>
+            <input id="date" name="date" type="date" required style={inputStyle} />
           </div>
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="start_time"
-              className="text-sm font-medium"
-              style={{ color: "var(--color-fg-muted)", fontFamily: "var(--font-ui)" }}
-            >
-              Start Time
-            </label>
-            <input
-              id="start_time"
-              name="start_time"
-              type="time"
-              required
-              className="px-3 py-2 rounded text-sm"
-              style={{
-                background: "var(--color-bg-inset)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-fg)",
-                fontFamily: "var(--font-ui)",
-                outline: "none",
-              }}
-            />
+          <div>
+            <label htmlFor="start_time" style={fieldLabelStyle}>Start time</label>
+            <input id="start_time" name="start_time" type="time" required style={inputStyle} />
           </div>
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="end_time"
-              className="text-sm font-medium"
-              style={{ color: "var(--color-fg-muted)", fontFamily: "var(--font-ui)" }}
-            >
-              End Time
-            </label>
-            <input
-              id="end_time"
-              name="end_time"
-              type="time"
-              required
-              className="px-3 py-2 rounded text-sm"
+          <div>
+            <label htmlFor="end_time" style={fieldLabelStyle}>End time</label>
+            <input id="end_time" name="end_time" type="time" required style={inputStyle} />
+          </div>
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
+            <button
+              type="submit"
+              disabled={isPending}
               style={{
-                background: "var(--color-bg-inset)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-fg)",
+                padding: "8px 20px",
+                borderRadius: 4,
+                border: "none",
+                background: isPending ? "var(--color-accent-hover)" : "var(--color-accent)",
+                color: "#fff",
                 fontFamily: "var(--font-ui)",
-                outline: "none",
+                fontWeight: 500,
+                fontSize: 14,
+                cursor: isPending ? "not-allowed" : "pointer",
+                opacity: isPending ? 0.7 : 1,
+                whiteSpace: "nowrap",
               }}
-            />
+            >
+              {isPending ? "Adding…" : "Add slot"}
+            </button>
           </div>
         </div>
         {error && (
-          <p className="mt-3 text-sm" style={{ color: "var(--color-rejected)", fontFamily: "var(--font-ui)" }}>
+          <p style={{ marginTop: 12, fontFamily: "var(--font-ui)", fontSize: 14, color: "var(--color-rejected)" }}>
             {error}
           </p>
         )}
-        <div className="mt-4">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="px-5 py-2.5 rounded text-sm font-medium text-white disabled:opacity-60"
-            style={{
-              background: isPending ? "var(--color-accent-hover)" : "var(--color-accent)",
-              fontFamily: "var(--font-ui)",
-            }}
-          >
-            {isPending ? "Adding…" : "Add Slot"}
-          </button>
-        </div>
       </form>
     </div>
   );
 }
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "var(--font-ui)",
+  fontWeight: 500,
+  fontSize: 13,
+  color: "var(--color-fg-muted)",
+  marginBottom: 6,
+};
 
 // ── Delete confirmation dialog ────────────────────────────────────────────────
 
@@ -240,10 +228,18 @@ function DeleteDialog({
       <Dialog.Trigger asChild>
         <button
           title="Delete slot"
-          className="p-1.5 rounded transition-colors"
-          style={{ color: "var(--color-fg-muted)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-rejected)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--color-fg-muted)")}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px 6px",
+            borderRadius: 4,
+            color: "var(--color-fg-subtle)",
+            display: "flex",
+            alignItems: "center",
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--color-rejected)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--color-fg-subtle)"; }}
         >
           <Trash2 size={15} />
         </button>
@@ -254,55 +250,85 @@ function DeleteDialog({
           style={{ background: "rgba(26,23,20,0.5)" }}
         />
         <Dialog.Content
-          className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm rounded-lg p-6"
-          style={{
+          className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm px-4 outline-none"
+        >
+          <div style={{
             background: "var(--color-bg-surface)",
             border: "1px solid var(--color-border)",
-          }}
-        >
-          <Dialog.Title
-            className="text-base font-semibold mb-2"
-            style={{ fontFamily: "var(--font-display)", color: "var(--color-fg)" }}
-          >
-            Delete Slot
-          </Dialog.Title>
-          <Dialog.Description
-            className="text-sm mb-6"
-            style={{ color: "var(--color-fg-muted)", fontFamily: "var(--font-ui)" }}
-          >
-            Delete <span style={{ color: "var(--color-fg)" }}>{slotLabel}</span>? This cannot be undone.
-          </Dialog.Description>
-          <div className="flex justify-end gap-3">
-            <Dialog.Close asChild>
-              <button
-                className="px-4 py-2 rounded text-sm font-medium"
-                style={{
+            borderRadius: 8,
+            padding: 24,
+          }}>
+            <Dialog.Title style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              fontSize: 18,
+              color: "var(--color-fg)",
+              marginBottom: 8,
+            }}>
+              Delete Slot
+            </Dialog.Title>
+            <Dialog.Description style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: 14,
+              color: "var(--color-fg-muted)",
+              marginBottom: 24,
+              lineHeight: 1.6,
+            }}>
+              Delete <span style={{ color: "var(--color-fg)" }}>{slotLabel}</span>? This cannot be undone.
+            </Dialog.Description>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <Dialog.Close asChild>
+                <button style={{
+                  padding: "8px 16px",
+                  borderRadius: 4,
                   border: "1px solid var(--color-border)",
+                  background: "transparent",
                   color: "var(--color-fg)",
                   fontFamily: "var(--font-ui)",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}>
+                  Cancel
+                </button>
+              </Dialog.Close>
+              <button
+                onClick={handleDelete}
+                disabled={isPending}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 4,
+                  border: "none",
+                  background: "var(--color-accent)",
+                  color: "#fff",
+                  fontFamily: "var(--font-ui)",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  cursor: isPending ? "not-allowed" : "pointer",
+                  opacity: isPending ? 0.65 : 1,
                 }}
               >
-                Cancel
+                {isPending ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+            <Dialog.Close asChild>
+              <button
+                style={{
+                  position: "absolute",
+                  top: 16,
+                  right: 16,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--color-fg-muted)",
+                  padding: 4,
+                }}
+                aria-label="Close"
+              >
+                <X size={16} />
               </button>
             </Dialog.Close>
-            <button
-              onClick={handleDelete}
-              disabled={isPending}
-              className="px-4 py-2 rounded text-sm font-medium text-white disabled:opacity-60"
-              style={{ background: "var(--color-accent)", fontFamily: "var(--font-ui)" }}
-            >
-              {isPending ? "Deleting…" : "Delete"}
-            </button>
           </div>
-          <Dialog.Close asChild>
-            <button
-              className="absolute top-4 right-4 p-1"
-              style={{ color: "var(--color-fg-muted)" }}
-              aria-label="Close"
-            >
-              <X size={16} />
-            </button>
-          </Dialog.Close>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -336,118 +362,125 @@ function SyncSection() {
   }
 
   return (
-    <div
-      className="rounded-lg p-6 mt-8"
-      style={{
-        background: "var(--color-bg-surface)",
-        border: "1px solid var(--color-border)",
-      }}
-    >
-      <div className="flex items-center gap-2 mb-1">
+    <div style={{
+      background: "var(--color-bg-surface)",
+      border: "1px solid var(--color-border)",
+      borderRadius: 8,
+      padding: 24,
+      marginTop: 32,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <CalendarDays size={16} style={{ color: "var(--color-fg-muted)" }} />
-        <h2
-          className="text-base font-medium"
-          style={{ fontFamily: "var(--font-display)", color: "var(--color-fg)" }}
-        >
+        <h2 style={{
+          fontFamily: "var(--font-display)",
+          fontWeight: 700,
+          fontSize: 18,
+          color: "var(--color-fg)",
+          letterSpacing: "-0.01em",
+        }}>
           Sync from Google Calendar
         </h2>
       </div>
-      <p className="text-sm mb-4" style={{ color: "var(--color-fg-muted)", fontFamily: "var(--font-ui)" }}>
+
+      <p style={{
+        fontFamily: "var(--font-ui)",
+        fontWeight: 400,
+        fontSize: 14,
+        color: "var(--color-fg-muted)",
+        marginBottom: 20,
+        lineHeight: 1.6,
+      }}>
         Import free time blocks from your calendar as available slots (9 AM – 6 PM working hours).
       </p>
 
-      {/* Warning */}
-      <div
-        className="flex gap-3 rounded p-3 mb-5 text-sm"
-        style={{
-          background: "var(--color-pending-bg)",
-          border: "1px solid var(--color-pending)",
-          color: "var(--color-pending)",
+      {/* Warning notice */}
+      <div style={{
+        display: "flex",
+        gap: 10,
+        padding: 12,
+        borderRadius: 4,
+        background: "var(--color-bg-inset)",
+        border: "1px solid var(--color-border)",
+        marginBottom: 20,
+      }}>
+        <AlertTriangle size={14} style={{ color: "var(--color-pending)", flexShrink: 0, marginTop: 2 }} />
+        <p style={{
           fontFamily: "var(--font-ui)",
-        }}
-      >
-        <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-        <span>
-          Manage all appointments through this dashboard. Changes made directly in Google Calendar
-          will not be reflected here.
-        </span>
+          fontWeight: 400,
+          fontSize: 13,
+          color: "var(--color-fg-muted)",
+          lineHeight: 1.5,
+        }}>
+          Manage all appointments through this dashboard. Changes made directly in Google Calendar will not be reflected here.
+        </p>
       </div>
 
       <form onSubmit={handleSync}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="sync-from"
-              className="text-sm font-medium"
-              style={{ color: "var(--color-fg-muted)", fontFamily: "var(--font-ui)" }}
-            >
-              From
-            </label>
+        <div className="slots-form-grid">
+          <div>
+            <label htmlFor="sync-from" style={fieldLabelStyle}>From</label>
             <input
               id="sync-from"
               type="date"
               required
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="px-3 py-2 rounded text-sm"
-              style={{
-                background: "var(--color-bg-inset)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-fg)",
-                fontFamily: "var(--font-ui)",
-                outline: "none",
-              }}
+              style={inputStyle}
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="sync-to"
-              className="text-sm font-medium"
-              style={{ color: "var(--color-fg-muted)", fontFamily: "var(--font-ui)" }}
-            >
-              To
-            </label>
+          <div>
+            <label htmlFor="sync-to" style={fieldLabelStyle}>To</label>
             <input
               id="sync-to"
               type="date"
               required
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="px-3 py-2 rounded text-sm"
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
+            <button
+              type="submit"
+              disabled={isPending || !from || !to}
               style={{
-                background: "var(--color-bg-inset)",
-                border: "1px solid var(--color-border)",
+                padding: "8px 20px",
+                borderRadius: 4,
+                border: "1px solid var(--color-border-strong)",
+                background: "transparent",
                 color: "var(--color-fg)",
                 fontFamily: "var(--font-ui)",
-                outline: "none",
+                fontWeight: 500,
+                fontSize: 14,
+                cursor: (isPending || !from || !to) ? "not-allowed" : "pointer",
+                opacity: (isPending || !from || !to) ? 0.5 : 1,
+                whiteSpace: "nowrap",
               }}
-            />
+            >
+              {isPending ? "Syncing…" : "Sync available times"}
+            </button>
           </div>
         </div>
 
         {result !== null && (
-          <p className="mt-3 text-sm" style={{ color: "var(--color-approved)", fontFamily: "var(--font-ui)" }}>
-            {result.count === 0
-              ? "No new slots found in that date range."
-              : `${result.count} slot${result.count === 1 ? "" : "s"} added from your Google Calendar.`}
-          </p>
-        )}
-
-        <div className="mt-4">
-          <button
-            type="submit"
-            disabled={isPending || !from || !to}
-            className="px-5 py-2.5 rounded text-sm font-medium disabled:opacity-60"
-            style={{
-              border: "1px solid var(--color-border-strong)",
-              color: "var(--color-fg)",
+          <div style={{
+            marginTop: 16,
+            borderLeft: "3px solid var(--color-approved)",
+            background: "var(--color-approved-bg)",
+            padding: "10px 14px",
+            borderRadius: 4,
+          }}>
+            <p style={{
               fontFamily: "var(--font-ui)",
-              background: "transparent",
-            }}
-          >
-            {isPending ? "Syncing…" : "Sync available times"}
-          </button>
-        </div>
+              fontSize: 14,
+              color: "var(--color-approved)",
+            }}>
+              {result.count === 0
+                ? "No new slots found in that date range."
+                : `${result.count} slot${result.count === 1 ? "" : "s"} added from your Google Calendar.`}
+            </p>
+          </div>
+        )}
       </form>
     </div>
   );
@@ -456,7 +489,6 @@ function SyncSection() {
 // ── Slot list ─────────────────────────────────────────────────────────────────
 
 export default function SlotsClient({ slots: initialSlots }: Props) {
-  // Local state so delete triggers a re-render without a full page reload
   const [slots, setSlots] = useState(initialSlots);
 
   function removeSlot(id: string) {
@@ -466,56 +498,87 @@ export default function SlotsClient({ slots: initialSlots }: Props) {
   const grouped = groupByDate(slots);
 
   return (
-    <div
-      className="max-w-3xl mx-auto px-6 py-10"
-      style={{ fontFamily: "var(--font-ui)" }}
-    >
-      <h1
-        className="text-3xl font-bold mb-8 tracking-tight"
-        style={{ fontFamily: "var(--font-display)", color: "var(--color-fg)" }}
-      >
-        Slots
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 24px", fontFamily: "var(--font-ui)" }}>
+      <h1 style={{
+        fontFamily: "var(--font-display)",
+        fontWeight: 700,
+        fontSize: 36,
+        color: "var(--color-fg)",
+        letterSpacing: "-0.02em",
+        lineHeight: 1.1,
+        marginBottom: 8,
+      }}>
+        Availability
       </h1>
+      <p style={{
+        fontFamily: "var(--font-ui)",
+        fontWeight: 400,
+        fontSize: 16,
+        color: "var(--color-fg-muted)",
+        marginBottom: 32,
+        lineHeight: 1.6,
+      }}>
+        Manage appointment slots. Add manually or sync from Google Calendar.
+      </p>
 
       <CreateSlotForm />
 
       {/* Slot list */}
       {slots.length === 0 ? (
-        <p className="text-sm" style={{ color: "var(--color-fg-muted)" }}>
+        <p style={{ fontFamily: "var(--font-ui)", fontSize: 14, color: "var(--color-fg-muted)" }}>
           No slots yet. Add one above or sync from Google Calendar below.
         </p>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {Array.from(grouped.entries()).map(([date, daySlots]) => (
             <div key={date}>
-              <p
-                className="text-xs font-medium uppercase tracking-widest mb-2"
-                style={{ color: "var(--color-fg-muted)" }}
-              >
+              <p style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
+                fontSize: 20,
+                color: "var(--color-fg)",
+                letterSpacing: "-0.01em",
+                paddingBottom: 10,
+                borderBottom: "1px solid var(--color-border)",
+                marginBottom: 8,
+              }}>
                 {formatDate(date)}
               </p>
-              <div
-                className="rounded-lg overflow-hidden"
-                style={{ border: "1px solid var(--color-border)" }}
-              >
+              <div style={{ display: "flex", flexDirection: "column" }}>
                 {daySlots.map((slot, idx) => {
                   const clientName = getActiveClient(slot.bookings);
                   return (
                     <div
                       key={slot.id}
-                      className="flex items-center justify-between px-4 py-3"
                       style={{
-                        background: "var(--color-bg-surface)",
-                        borderTop: idx > 0 ? "1px solid var(--color-border)" : undefined,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 0",
+                        borderBottom: idx < daySlots.length - 1 ? "1px solid var(--color-border)" : "none",
                       }}
                     >
-                      <div className="flex items-center gap-4 min-w-0">
-                        <span className="text-sm tabular-nums" style={{ color: "var(--color-fg)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                        <span style={{
+                          fontFamily: "var(--font-ui)",
+                          fontWeight: 500,
+                          fontSize: 14,
+                          color: "var(--color-fg)",
+                          whiteSpace: "nowrap",
+                        }}>
                           {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
                         </span>
                         <StatusBadge status={slot.status} />
                         {clientName && (
-                          <span className="text-sm truncate" style={{ color: "var(--color-fg-muted)" }}>
+                          <span style={{
+                            fontFamily: "var(--font-ui)",
+                            fontWeight: 400,
+                            fontSize: 14,
+                            color: "var(--color-fg-muted)",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
                             {clientName}
                           </span>
                         )}
@@ -537,6 +600,20 @@ export default function SlotsClient({ slots: initialSlots }: Props) {
       )}
 
       <SyncSection />
+
+      <style>{`
+        .slots-form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr auto;
+          gap: 12px;
+          align-items: end;
+        }
+        @media (max-width: 640px) {
+          .slots-form-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 }
