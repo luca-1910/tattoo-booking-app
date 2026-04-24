@@ -52,3 +52,11 @@ body {
   font-family: var(--font-ui), system-ui, sans-serif;
   line-height: 1.6;
 }
+
+.btn-outline-white {
+  transition: background 0.15s, color 0.15s;
+}
+.btn-outline-white:hover {
+  background: white;
+  color: var(--color-fg);
+}
