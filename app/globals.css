@@ -53,6 +53,14 @@ body {
   line-height: 1.6;
 }
 
+.btn-outline-white {
+  transition: background 0.15s, color 0.15s;
+}
+.btn-outline-white:hover {
+  background: white;
+  color: var(--color-fg);
+}
+
 .input-field {
   transition: border-color 0.15s;
 }
